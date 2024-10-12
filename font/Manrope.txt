@@ -1,0 +1,3 @@
+font-family: 'Manrope', Arial, sans-serif;
+font-weight: 500;
+letter-spacing: -0.2px;
