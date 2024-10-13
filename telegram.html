@@ -1,1 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>brAIn</title>
+    <style>
+        /* watch nuances in docs of web apps */
+    </style>
+</head>
+<body>
+    <div id="error"></div>
+    <div id="main">
+        <p>
+            <b>Hi from brAIn!</b>
+        </p>
+        <img src="brAIn.png" alt="brAIn">
+        <button>Cool!</button>
+        <form>
+            <button id="user_name"></button>
+            <button id="user_email"></button>
+            <button id="user_phone"></button>
+        </form>
+    </div>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        let tg = window.Telegram.WebApp;
+        let buy = document.getElementById('buy');
+        let order = document.getElementById('order');
+        tg.expand();
 
+        buy.addEventListener("click", () => {
+            document.getElementById("main").style.display = "none";
+            document.getElementById("form").style.display = "block";
+            document.getElementById("user_id").value = tg.initDataUnsafe.user.first_name + " " + tg.initDataUnsafe.user.last_name
+        });
+
+        order.addEventListener("click", () => {
+            document.getElementById("error").innerText = '';
+            let name = document.getElementById("user_name").value;
+            let email = document.getElementById("user_email").value;
+            let phone = document.getElementById("user_phone").value;
+
+            if (name.length < 5) {
+                document.getElementById("error").innerText = "Error, please try again"
+                return;
+            }
+            if (email.length < 10) {
+                document.getElementById("error").innerText = "Error, please try again"
+                return;
+            }
+            if (phone.length < 12) {
+                document.getElementById("error").innerText = "Error, please try again"
+                return;
+            }
+
+            let data = {
+                name: name,
+                email: email,
+                phone: phone
+            }
+            tg.sendData(JSON.stringify(data));
+
+            tg.close()
+        });
+    </script>
+</body>
+</html>
