@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Art</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #9b4dca, #ff69b4);
+        }
+
+        .brain-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            animation: pulse 4s infinite;
+        }
+
+        .brain {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e6a8d7, #8a2be2);
+            border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 96px;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+        }
+
+        .brain::before {
+            content: '';
+            position: absolute;
+            width: 90%;
+            height: 90%;
+            top: 5%;
+            left: 5%;
+            background: linear-gradient(45deg, #da70d6, #9932cc);
+            border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+            animation: brainPulse 3s infinite alternate;
+            z-index: 1;
+        }
+
+        .brain::after {
+            content: '';
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            background: linear-gradient(225deg, #ff69b4, #800080);
+            border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%;
+            animation: brainPulse 4s infinite alternate-reverse;
+            z-index: 1;
+        }
+
+        #counter {
+            position: relative;
+            z-index: 2;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+/Edge */
+            letter-spacing: 0.1em;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes brainPulse {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(10deg) scale(1.1); }
+        }
+
+        @keyframes clickPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .click-pop {
+            animation: clickPop 0.2s ease-in-out forwards;
+        }
+
+        .connect-wallet {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+/Edge */
+        }
+
+        .connect-wallet:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .claim-button {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            user-select: none;
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .claim-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(to right, #60A5FA, #2563eb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+            opacity: 0;
+            user-select: none;
+            animation: moveUp 2s ease-out forwards;
+        }
+
+        @keyframes moveUp {
+            0% { 
+                transform: translateY(0);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <button class="connect-wallet" onclick="connectWallet()">Connect Wallet</button>
+    <div class="brain-container">
+        <div class="brain" onclick="this.classList.add('click-pop'); 
+            setTimeout(() => this.classList.remove('click-pop'), 200);
+            incrementCounter()">
+            <span id="counter">0</span>
+        </div>
+    </div>
+    <button class="claim-button" onclick="claim()">CLAIM</button>
+
+    <script>
+        let clicks = 0;
+
+        function incrementCounter() {
+            document.getElementById('counter').textContent = ++clicks;
+            if (clicks === 10) {
+                document.querySelector('.claim-button').style.display = 'block';
+            }
+        }
+
+        function claim() {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = `+${clicks}`;
+            document.body.appendChild(notification);
+
+            // Reset counter
+            clicks = 0;
+            document.getElementById('counter').textContent = clicks;
+            document.querySelector('.claim-button').style.display = 'none';
+
+            // Remove notification after animation completes
+            setTimeout(() => notification.remove(), 2000);
+        }
+
+        let isBlue = false;
+
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Request account access
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
+                    
+                    // Get the connected wallet address
+                    const walletAddress = accounts[0];
+                    
+                    // Update button text to show truncated wallet address
+                    const btn = document.querySelector('.connect-wallet');
+                    btn.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+                    
+                } catch (error) {
+                    console.error('User denied account access');
+                    alert('Please connect your wallet to continue');
+                }
+            } else {
+                alert('Please install MetaMask or another Web3 wallet');
+            }
+        }
+
+        function switchColors() {
+            isBlue = !isBlue;
+            const body = document.body;
+            const brain = document.querySelector('.brain');
+            
+            if (isBlue) {
+                // Switch to enhanced blue theme
+                body.style.background = 'linear-gradient(45deg, #0033cc, #00ffff)';
+                brain.style.background = 'linear-gradient(135deg, #00ccff, #0066ff)';
+                
+                // Update brain layers
+                document.styleSheets[0].cssRules.forEach(rule => {
+                    if (rule.selectorText === '.brain::before') {
+                        rule.style.background = 'linear-gradient(45deg, #1e90ff, #000099)';
+                    }
+                    if (rule.selectorText === '.brain::after') {
+                        rule.style.background = 'linear-gradient(225deg, #00ffff, #000066)';
+                    }
+                });
+            } else {
+                // Original purple/pink theme
+                body.style.background = 'linear-gradient(45deg, #9b4dca, #ff69b4)';
+                brain.style.background = 'linear-gradient(135deg, #e6a8d7, #8a2be2)';
+                
+                document.styleSheets[0].cssRules.forEach(rule => {
+                    if (rule.selectorText === '.brain::before') {
+                        rule.style.background = 'linear-gradient(45deg, #da70d6, #9932cc)';
+                    }
+                    if (rule.selectorText === '.brain::after') {
+                        rule.style.background = 'linear-gradient(225deg, #ff69b4, #800080)';
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
