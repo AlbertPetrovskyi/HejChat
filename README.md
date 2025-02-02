@@ -1,1 +1,1 @@
-Cute Tests only :)
+Cute tests only :)
