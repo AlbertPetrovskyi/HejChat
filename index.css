@@ -12,20 +12,20 @@ body {
 	color: white;
 }
 
-h2 {
+h3 {
 	font-size: 2.5rem;
+	margin-top: -2rem;
 	margin-bottom: 1rem;
-    text-align: center;
+	text-align: center;
 }
 
 p {
 	color: rgb(216, 216, 216);
 	font-size: 1.2rem;
 	border: none;
-	/* Removing duplicate property 'color: none;' */
 	border-radius: 5px;
 	cursor: pointer;
-    text-align: center;
+	text-align: center;
 }
 
 p:hover {
