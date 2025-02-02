@@ -12,18 +12,24 @@ body {
 	color: white;
 }
 
-h1 {
+h2 {
 	font-size: 2.5rem;
 	margin-bottom: 1rem;
+    text-align: center;
 }
 
 p {
 	color: rgb(216, 216, 216);
 	font-size: 1.2rem;
 	border: none;
-	color: none;
+	/* Removing duplicate property 'color: none;' */
 	border-radius: 5px;
 	cursor: pointer;
+    text-align: center;
+}
+
+p:hover {
+	color: white;
 }
 
 p:hover {
