@@ -12,9 +12,8 @@ form.addEventListener('submit', async (e) => {
 	const question = document.getElementById('questionInput').value;
 	const responseArea = document.getElementById('responseArea');
 	
-	// Check if the question is empty
 	if (!question.trim()) {
-		 responseArea.textContent = "Please enter a question again.";
+		 responseArea.textContent = "No prompt, no answer.";
 		 return;
 	}
 
@@ -27,22 +26,19 @@ form.addEventListener('submit', async (e) => {
 			  body: JSON.stringify({ question })
 		 });
 
-		 // Check if the response is not ok
 		 if (!response.ok) {
-			  throw new Error('Network response was not ok. Please try again.');
+			  throw new Error('Even AI needs a break...');
 		 }
 
 		 const data = await response.json();
 
-		 // Set the innerHTML to render the response with HTML tags
-		 responseArea.innerHTML = data.answer || "No response. Please try again.";
+		 responseArea.innerHTML = data.answer || "Even AI needs a break...";
 		 
-		 // Scroll to the top of the response area
 		 responseArea.scrollTop = 0;
 
 	} catch (error) {
 		 console.error(error);
-		 responseArea.textContent = "An error occurred. Please try again.";
+		 responseArea.textContent = "Even AI needs a break...";
 		 responseArea.scrollTop = 0;
 	}
 
