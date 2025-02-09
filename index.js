@@ -12,7 +12,7 @@ document.getElementById('questionForm').addEventListener('submit', async (e) => 
     const responseArea = document.getElementById('responseArea');
     
     if (!question.trim()) {
-        responseArea.textContent = "Please enter a question.";
+        responseArea.textContent = "Please enter a question again.";
         return;
     }
 
@@ -26,12 +26,12 @@ document.getElementById('questionForm').addEventListener('submit', async (e) => 
         });
 
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Network response was not ok. Please try again.');
         }
 
         const data = await response.json();
 
-        responseArea.textContent = "Answer: " + (data.answer || "No response");
+        responseArea.textContent = data.answer || "No response. Please try again.";
     } catch (error) {
         console.error(error);
         responseArea.textContent = "An error occurred. Please try again.";
