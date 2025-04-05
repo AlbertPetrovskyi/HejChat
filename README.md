@@ -1,1 +1,2 @@
-Cute tests only :)
+# HejČat
+Tvůj roztomilý AI asistent &lt;3
