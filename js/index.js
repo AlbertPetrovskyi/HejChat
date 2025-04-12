@@ -64,7 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!messageSpace) return;
 
         const welcomeScreen = messageSpace.querySelector('.space-welcome');
-        const hasMessages = messageSpace.querySelector('.space-request, .space-response');
+        // More specific check for any message content
+        const hasMessages = messageSpace.querySelectorAll('.space-request, .space-response').length > 0;
 
         if (!hasMessages) {
             // If chat is empty and no welcome screen exists, add it
@@ -134,11 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return requestDiv;
     }
 
-    let OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+    const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
     let OPENROUTER_API_KEY = '';
-    let OPENROUTER_MODEL = 'mistralai/mistral-7b-instruct:free';
+    let OPENROUTER_MODEL = 'meta-llama/llama-4-maverick:free';
 
-    function createResponseMessageElement(messageText, originalQuery) {
+    function createResponseMessageElement(messageText, originalQuery, showIcons = false, thinking = null) {
         const responseDiv = document.createElement('div');
         responseDiv.classList.add('space-response');
 
@@ -152,48 +153,164 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const responseTextSpan = document.createElement('span');
         responseTextSpan.classList.add('space-response-text');
-        responseTextSpan.textContent = messageText;
+        
+        // Use parsed markdown instead of raw text
+        if (messageText) {
+            responseTextSpan.innerHTML = parseMarkdown(messageText);
+        } else {
+            responseTextSpan.textContent = '';
+        }
 
         responseBlock.appendChild(responseTextSpan);
+        
+        // Add thinking toggle if thinking is available
+        if (thinking) {
+            const thinkingToggle = document.createElement('div');
+            thinkingToggle.classList.add('thinking-toggle');
+            thinkingToggle.textContent = "Thinking...";
+            
+            const thinkingContent = document.createElement('div');
+            thinkingContent.classList.add('thinking-content');
+            thinkingContent.style.display = 'none';
+            thinkingContent.textContent = thinking;
+            
+            thinkingToggle.addEventListener('click', () => {
+                if (thinkingContent.style.display === 'none') {
+                    thinkingContent.style.display = 'block';
+                    thinkingToggle.textContent = "Hide thinking";
+                    thinkingToggle.classList.add('active');
+                } else {
+                    thinkingContent.style.display = 'none';
+                    thinkingToggle.textContent = "Thinking...";
+                    thinkingToggle.classList.remove('active');
+                }
+            });
+            
+            responseBlock.appendChild(thinkingToggle);
+            responseBlock.appendChild(thinkingContent);
+        }
+        
         responseDiv.appendChild(responseBlock);
 
-        const template = document.getElementById('responseIconsTemplate');
-        if (template) {
-            // Clone the entire template content so nothing is lost
-            const iconsClone = template.content.cloneNode(true);
-            responseDiv.appendChild(iconsClone);
+        // Only add icons if showIcons is true
+        if (showIcons) {
+            const template = document.getElementById('responseIconsTemplate');
+            if (template) {
+                // Clone the entire template content
+                const iconsClone = template.content.cloneNode(true);
+                responseDiv.appendChild(iconsClone);
 
-            const responseIcons = responseDiv.querySelector('.space-response-icons');
-            if (responseIcons) {
-                // Handle copy functionality (already implemented)
-                const copyIcon = responseIcons.querySelector('.space-copy');
-                if (copyIcon) {
-                    copyIcon.addEventListener('click', () => {
-                        const textToCopy = responseDiv.querySelector('.space-response-text').textContent;
-                        navigator.clipboard.writeText(textToCopy)
-                            .then(() => {
-                                console.log('Response text copied to clipboard.');
-                            })
-                            .catch(err => {
-                                console.error('Failed to copy text:', err);
-                            });
-                    });
-                }
-                // Add new functionality on click of .space-rerun
-                const rerunIcon = responseIcons.querySelector('.space-rerun');
-                if (rerunIcon) {
-                    rerunIcon.addEventListener('click', async () => {
-                        const originalQuery = responseDiv.dataset.originalQuery;
-                        if (originalQuery) {
-                            responseTextSpan.textContent = "Thinking...";
-                            try {
-                                const newResponse = await sendMessageToOpenRouter(originalQuery);
-                                responseTextSpan.textContent = newResponse;
-                            } catch (error) {
-                                responseTextSpan.textContent = "Sorry, I couldn't process your request at this time.";
+                const responseIcons = responseDiv.querySelector('.space-response-icons');
+                if (responseIcons) {
+                    // Handle copy functionality
+                    const copyIcon = responseIcons.querySelector('.space-copy');
+                    if (copyIcon) {
+                        copyIcon.addEventListener('click', () => {
+                            const textToCopy = responseDiv.querySelector('.space-response-text').textContent;
+                            navigator.clipboard.writeText(textToCopy)
+                                .then(() => {
+                                    console.log('Response text copied to clipboard.');
+                                })
+                                .catch(err => {
+                                    console.error('Failed to copy text:', err);
+                                });
+                        });
+                    }
+                    
+                    // Add functionality for rerun icon
+                    const rerunIcon = responseIcons.querySelector('.space-rerun');
+                    if (rerunIcon) {
+                        rerunIcon.addEventListener('click', async () => {
+                            const originalQuery = responseDiv.dataset.originalQuery;
+                            if (originalQuery) {
+                                // Get the parent container to add the temporary element
+                                const parentContainer = responseDiv.parentNode;
+                                if (!parentContainer) return;
+                                
+                                // Create a temporary response element WITHOUT icons
+                                const tempResponseElement = createResponseMessageElement("", originalQuery, false);
+                                const tempResponseTextSpan = tempResponseElement.querySelector('.space-response-text');
+                                
+                                // Clear the text content and add typing indicator
+                                const typingIndicator = document.createElement('span');
+                                typingIndicator.className = 'typing-indicator';
+                                typingIndicator.textContent = "•••";
+                                tempResponseTextSpan.appendChild(typingIndicator);
+                                
+                                // Replace the current response with the temporary one
+                                parentContainer.replaceChild(tempResponseElement, responseDiv);
+                                
+                                try {
+                                    // Variables to track content as it streams in
+                                    let rawMarkdownContent = '';
+                                    let currentThinking = '';
+                                    let hasThinkingContent = false;
+                                    
+                                    // Create an AbortController for this rerun
+                                    const abortController = new AbortController();
+                                    
+                                    // Call API with the original query and a chunk handler
+                                    const result = await sendMessageToOpenRouter(
+                                        originalQuery, 
+                                        abortController.signal,
+                                        (chunk, fullText, hasThinking, thinkingText) => {
+                                            // Remove typing indicator if it's still there
+                                            if (typingIndicator && typingIndicator.parentNode) {
+                                                typingIndicator.parentNode.removeChild(typingIndicator);
+                                            }
+                                            
+                                            // Store the markdown content
+                                            rawMarkdownContent = fullText;
+                                            
+                                            // Update the temporary response with the current text
+                                            tempResponseTextSpan.innerHTML = parseMarkdown(fullText);
+                                            
+                                            // Update thinking content
+                                            if (hasThinking && thinkingText) {
+                                                currentThinking = thinkingText;
+                                                hasThinkingContent = true;
+                                            }
+                                            
+                                            // Keep scrolling to the latest content
+                                            if (messageSpace) {
+                                                messageSpace.scrollTop = messageSpace.scrollHeight;
+                                            }
+                                        }
+                                    );
+                                    
+                                    // After all chunks are received, create the final element with icons
+                                    const newResponseElement = createResponseMessageElement(
+                                        rawMarkdownContent,  // Use the accumulated markdown
+                                        originalQuery, 
+                                        true,  // Now show icons
+                                        hasThinkingContent && currentThinking.length > 0 ? currentThinking : null
+                                    );
+                                    
+                                    // Replace the temporary element
+                                    parentContainer.replaceChild(newResponseElement, tempResponseElement);
+                                    
+                                } catch (error) {
+                                    // Remove typing indicator if it exists
+                                    if (typingIndicator && typingIndicator.parentNode) {
+                                        typingIndicator.parentNode.removeChild(typingIndicator);
+                                    }
+                                    
+                                    // Show error message
+                                    tempResponseTextSpan.textContent = "Sorry, I couldn't process your request at this time.";
+                                    
+                                    // After error, create a final response WITH icons
+                                    const errorResponseElement = createResponseMessageElement(
+                                        "Sorry, I couldn't process your request at this time.", 
+                                        originalQuery, 
+                                        true  // Show icons even for errors
+                                    );
+                                    
+                                    // Replace the temporary element
+                                    parentContainer.replaceChild(errorResponseElement, tempResponseElement);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }
@@ -201,30 +318,96 @@ document.addEventListener('DOMContentLoaded', () => {
         return responseDiv;
     }
 
-    async function sendMessageToOpenRouter(message, signal) {
+    async function sendMessageToOpenRouter(message, signal, onChunk) {
         try {
+            // Check if API key is provided
+            if (!OPENROUTER_API_KEY) {
+                throw new Error("API klíč není nastaven. Prosím, zadejte API klíč v nastavení.");
+            }
+            
+            console.log("Sending request to model:", OPENROUTER_MODEL);
+            
+            // Build request body
+            const requestBody = {
+                model: OPENROUTER_MODEL,
+                messages: [{ role: 'user', content: message }],
+                stream: true
+            };
+            
+            console.log("Sending request to OpenRouter API...");
+            
             const response = await fetch(OPENROUTER_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                    'HTTP-Referer': window.location.origin,
-                    'X-Title': 'HejChat'
+                    'HTTP-Referer': window.location.origin
                 },
-                body: JSON.stringify({
-                    model: OPENROUTER_MODEL,
-                    messages: [{ role: 'user', content: message }]
-                }),
-                signal // Pass the abort signal here
+                body: JSON.stringify(requestBody),
+                signal
             });
 
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`API Error ${response.status}:`, errorText);
                 throw new Error(`API request failed with status ${response.status}`);
             }
 
-            const data = await response.json();
-            return data.choices[0].message.content;
+            // Process the stream
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let completeResponse = '';
+            
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    
+                    if (done) {
+                        console.log("Stream complete");
+                        break;
+                    }
+                    
+                    // Convert the Uint8Array to a string
+                    const chunk = decoder.decode(value, { stream: true });
+                    console.log("Received chunk of length:", chunk.length);
+                    
+                    // Process each line in the chunk
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (!line.trim() || line.includes('[DONE]')) continue;
+                        
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const jsonStr = line.substring(6); // Remove 'data: ' prefix
+                                const json = JSON.parse(jsonStr);
+                                
+                                // Extract content from delta
+                                const content = json.choices?.[0]?.delta?.content;
+                                if (content) {
+                                    completeResponse += content;
+                                    console.log("New content:", content);
+                                    if (onChunk) {
+                                        onChunk(content, completeResponse);
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn("Error parsing chunk:", e);
+                            }
+                        }
+                    }
+                }
+                
+                return { response: completeResponse };
+            } catch (streamError) {
+                console.error("Stream error:", streamError);
+                if (completeResponse) {
+                    return { response: completeResponse };
+                }
+                throw streamError;
+            }
         } catch (error) {
+            console.error("API request error:", error);
             throw error;
         }
     }
@@ -240,28 +423,55 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userMessage === '') return;
         if (!messageSpace) return;
 
-        // Create and append the request element
+        // Create a new container for this request-response pair
+        const messageContainer = document.createElement('div');
+        messageContainer.style.display = 'flex';
+        messageContainer.style.flexDirection = 'column';
+        messageContainer.style.gap = '1rem';
+        messageContainer.style.width = '100%';
+        messageContainer.style.marginBottom = '1rem';
+        
+        // Create the request element
         const newRequestElement = createRequestMessageElement(userMessage);
-        messageSpace.appendChild(newRequestElement);
-        messageSpace.scrollTop = messageSpace.scrollHeight;
+        messageContainer.appendChild(newRequestElement);
+        
         chatInput.value = '';
 
-        // Update welcome screen after adding message
-        updateWelcomeScreen();
+        // First remove any welcome screen
+        const welcomeScreen = messageSpace.querySelector('.space-welcome');
+        if (welcomeScreen) {
+            welcomeScreen.remove();
+        }
 
-        // Create "Thinking..." loading element and append it
-        const loadingElement = createResponseMessageElement("Thinking...");
-        messageSpace.appendChild(loadingElement);
+        // Create response element with initial "Thinking..." text but NO icons yet
+        const responseElement = createResponseMessageElement("", userMessage, false);
+        const responseTextSpan = responseElement.querySelector('.space-response-text');
+        responseTextSpan.textContent = "";
+
+        // Create typing indicator
+        const typingIndicator = document.createElement('span');
+        typingIndicator.className = 'typing-indicator';
+        typingIndicator.textContent = "•••";
+        responseTextSpan.appendChild(typingIndicator);
+        
+        messageContainer.appendChild(responseElement);
+        
+        // Append to add messages to the bottom
+        messageSpace.appendChild(messageContainer);
+        
+        // Scroll to the bottom to show the newest message
         messageSpace.scrollTop = messageSpace.scrollHeight;
+
+        // Update welcome screen status
+        updateWelcomeScreen();
 
         // Create an AbortController to cancel the API request if needed
         const abortController = new AbortController();
 
-        // Save original button content for later restoration
+        // Save original button content
         const originalSendHTML = sendButton.innerHTML;
 
-        // Change .panel-send to a rectangle Stop button using the provided SVG,
-        // disable further input, and add pointer cursor.
+        // Change to stop button
         sendButton.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 35 35" fill="none">
                 <path d="M0 5C0 2.23858 2.23858 0 5 0H30C32.7614 0 35 2.23858 35 5V30C35 32.7614 32.7614 35 30 35H5C2.23858 35 0 32.7614 0 30V5Z" fill="url(#paint0_linear_392_92)"/>
@@ -272,54 +482,155 @@ document.addEventListener('DOMContentLoaded', () => {
                     </linearGradient>
                 </defs>
             </svg>`;
-        sendButton.disabled = true;
+        sendButton.disabled = false; // Change from true to false
         sendButton.style.cursor = "pointer";
 
-        // Create a named stop handler so we can remove it later.
-        const stopHandler = () => {
-            // Abort the API request.
-            abortController.abort();
-            // Remove the "Thinking..." element.
-            if (messageSpace.contains(loadingElement)) {
-                messageSpace.removeChild(loadingElement);
-            }
-            // Restore the original send button.
-            sendButton.innerHTML = originalSendHTML;
-            sendButton.disabled = false;
-            sendButton.style.cursor = "pointer";
-            // Remove the event listener so it won't fire on future submits.
-            sendButton.removeEventListener('click', stopHandler);
-        };
+        // Create a flag to track if request is aborted
+        let isAborted = false;
 
+        // Create stop handler with named function so we can properly remove it later
+        function stopHandler(e) {
+            e.preventDefault(); // Prevent form submission
+            e.stopPropagation(); // Stop event bubbling
+            console.log('Stop button clicked');
+            isAborted = true;
+            abortController.abort();
+            
+            if (typingIndicator && typingIndicator.parentNode) {
+                typingIndicator.parentNode.removeChild(typingIndicator);
+            }
+            
+            // Display the partial response with icons when stopped
+            if (messageContainer.contains(responseElement)) {
+                const newResponseElement = createResponseMessageElement(
+                    rawMarkdownContent || responseTextSpan.innerHTML, 
+                    userMessage, 
+                    true,
+                    hasThinkingContent && currentThinking.length > 0 ? currentThinking : null
+                );
+                messageContainer.removeChild(responseElement);
+                messageContainer.appendChild(newResponseElement);
+            }
+            
+            // Restore send button (immediately after stopping)
+            sendButton.innerHTML = originalSendHTML;
+            sendButton.disabled = chatInput.value.trim() === '';
+            sendButton.style.cursor = "pointer";
+            // Important: Remove the event listener!
+            sendButton.removeEventListener('click', stopHandler);
+        }
+
+        // Add the stop handler
         sendButton.addEventListener('click', stopHandler);
 
         try {
-            // Pass the abort signal to the API request.
-            const aiResponse = await sendMessageToOpenRouter(userMessage, abortController.signal);
-
-            if (messageSpace.contains(loadingElement)) {
-                messageSpace.removeChild(loadingElement);
-            }
-
-            const responseElement = createResponseMessageElement(aiResponse, userMessage);
-            messageSpace.appendChild(responseElement);
+            // Variables to track content
+            let rawMarkdownContent = '';
+            let currentThinking = '';
+            let hasThinkingContent = false;
+            
+            // Use the streaming function with a simpler callback
+            await sendMessageToOpenRouter(userMessage, abortController.signal, 
+                (chunk, fullText, hasThinking, thinkingText) => {
+                    // Remove typing indicator if it's the first chunk
+                    if (typingIndicator && typingIndicator.parentNode) {
+                        typingIndicator.parentNode.removeChild(typingIndicator);
+                    }
+                    
+                    // Update the raw content
+                    rawMarkdownContent = fullText;
+                    
+                    // Process just the new chunk and append it - don't replace the whole content
+                    const parsedChunk = parseMarkdown(chunk);
+                    
+                    // Handle the first chunk specially
+                    if (responseTextSpan.innerHTML === "" || responseTextSpan.querySelector('.typing-indicator')) {
+                        responseTextSpan.innerHTML = parsedChunk;
+                    } else {
+                        // For subsequent chunks, append to existing content
+                        // Remove closing </p> tag if it exists
+                        let currentHTML = responseTextSpan.innerHTML;
+                        if (currentHTML.endsWith('</p>')) {
+                            currentHTML = currentHTML.substring(0, currentHTML.length - 4);
+                        }
+                        
+                        // Remove opening <p> tag from parsed chunk
+                        let chunkToAppend = parsedChunk;
+                        if (chunkToAppend.startsWith('<p>')) {
+                            chunkToAppend = chunkToAppend.substring(3);
+                        }
+                        
+                        // Append the chunk and close the paragraph
+                        responseTextSpan.innerHTML = currentHTML + chunkToAppend;
+                    }
+                    
+                    // Update thinking content if provided
+                    if (hasThinking && thinkingText) {
+                        currentThinking = thinkingText;
+                        hasThinkingContent = true;
+                    }
+                    
+                    // Keep scrolling to the bottom
+                    messageSpace.scrollTop = messageSpace.scrollHeight;
+                }
+            );
+            
+            // After streaming completes, create the final response element with icons
+            console.log("Creating final response with length:", rawMarkdownContent.length);
+            const newResponseElement = createResponseMessageElement(
+                rawMarkdownContent,
+                userMessage, 
+                true,
+                hasThinkingContent && currentThinking.length > 0 ? currentThinking : null
+            );
+            
+            // Replace the temporary element
+            messageContainer.removeChild(responseElement);
+            messageContainer.appendChild(newResponseElement);
+            
         } catch (error) {
-            if (messageSpace.contains(loadingElement)) {
-                messageSpace.removeChild(loadingElement);
-            }
-            // Do not show error message if the request was aborted.
             if (error.name !== 'AbortError') {
-                const errorElement = createResponseMessageElement("Omlouvám se, váš požadavek momentálně nemohu zpracovat.");
-                messageSpace.appendChild(errorElement);
+                console.error("Error during chat request:", error);
+                let errorMessage = "Omlouvám se, ale došlo k chybě při zpracování vaší žádosti.";
+                
+                // Display more specific error messages
+                if (error.message.includes("API klíč")) {
+                    errorMessage = error.message;
+                } else if (error.message.includes("status 401")) {
+                    errorMessage = "Neplatný API klíč. Zkontrolujte své nastavení API.";
+                } else if (error.message.includes("status 400")) {
+                    errorMessage = "Neplatný požadavek na model. Zkuste jiný model v nastavení.";
+                } else if (error.message.includes("status 429")) {
+                    errorMessage = "Překročili jste limit požadavků na API. Zkuste to později.";
+                } else if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+                    errorMessage = "Problém s připojením k API. Zkontrolujte své internetové připojení.";
+                }
+                
+                responseTextSpan.textContent = errorMessage;
             }
+        } finally {
+            // Remove typing indicator if it still exists
+            if (typingIndicator && typingIndicator.parentNode) {
+                typingIndicator.parentNode.removeChild(typingIndicator);
+            }
+            
+            // If the response is still in the DOM and there was an error or abort,
+            // add the icons now so they're always available at the end
+            if (messageContainer.contains(responseElement)) {
+                const finalResponseText = responseTextSpan.textContent;
+                const newResponseElement = createResponseMessageElement(finalResponseText, userMessage, true);
+                messageContainer.removeChild(responseElement);
+                messageContainer.appendChild(newResponseElement);
+            }
+            
+            // Restore the original send button
+            sendButton.innerHTML = originalSendHTML;
+            sendButton.disabled = false;
+            sendButton.style.cursor = "pointer";
+            sendButton.removeEventListener('click', stopHandler);
         }
 
         messageSpace.scrollTop = messageSpace.scrollHeight;
-
-        // Restore the original send button if not already restored.
-        sendButton.innerHTML = originalSendHTML;
-        sendButton.disabled = false;
-        sendButton.style.cursor = "pointer";
     });
 
     if (chatInput && sendButton) {
@@ -371,28 +682,42 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!overlay) { // Open modal
                 overlay = document.createElement('div');
                 overlay.id = 'api-overlay';
+                overlay.className = 'modal-overlay'; // Add common class for styling
                 document.body.appendChild(overlay);
 
                 const apiBlock = document.createElement('div');
                 apiBlock.id = 'api-block';
+                apiBlock.className = 'modal-block'; // Add common class for styling
 
                 // Position below header-api
                 const headerApiRect = headerApi.getBoundingClientRect();
-                apiBlock.style.top = (headerApiRect.bottom + 10 + window.scrollY) + "px"; // Keep this as dynamic style
+                apiBlock.style.top = (headerApiRect.bottom + 10 + window.scrollY) + "px";
 
-                // Create form
+                // Create form with vertical layout
                 const form = document.createElement('form');
                 form.id = 'api-form';
+                form.className = 'modal-form'; // Add common class for styling
+
+                // Create API key input container similar to settings-select-container
+                const inputContainer = document.createElement('div');
+                inputContainer.className = 'settings-select-container';
+
+                // Create label like in settings
+                const label = document.createElement('label');
+                label.textContent = 'API klíč:';
+                label.htmlFor = 'api-input';
+                label.className = 'settings-label';
 
                 // Create input container
-                const inputContainer = document.createElement('div');
-                inputContainer.className = 'api-input-container';
+                const apiInputContainer = document.createElement('div');
+                apiInputContainer.className = 'api-input-container';
 
                 // Create input field
                 const input = document.createElement('input');
                 input.type = 'password';
                 input.placeholder = 'Zadejte OpenRouter API klíč';
                 input.className = 'api-input';
+                input.id = 'api-input';
                 input.value = OPENROUTER_API_KEY;
 
                 // Create toggle icon
@@ -419,9 +744,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // Build input container
-                inputContainer.appendChild(input);
-                inputContainer.appendChild(toggleIcon);
+                // Build input container structure
+                apiInputContainer.appendChild(input);
+                apiInputContainer.appendChild(toggleIcon);
+                
+                // Add label and input container to the main container
+                inputContainer.appendChild(label);
+                inputContainer.appendChild(apiInputContainer);
+                
+                // Add input container to form
                 form.appendChild(inputContainer);
 
                 // Create save button
@@ -506,15 +837,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 const select = document.createElement('select');
                 select.id = 'model-select';
                 select.className = 'settings-select';
+                
+                // Add keydown event listener to handle Enter key
+                select.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Save the selected model
+                        OPENROUTER_MODEL = select.value;
+                        // Close the modal
+                        overlay.parentNode.removeChild(overlay);
+                    }
+                });
 
-                // Add model options
                 const models = [
-                    { value: 'mistralai/mistral-7b-instruct:free', label: 'Mistral 7B (Free)' },
-                    { value: 'anthropic/claude-3-opus:beta', label: 'Claude 3 Opus' },
-                    { value: 'anthropic/claude-3-sonnet:beta', label: 'Claude 3 Sonnet' },
-                    { value: 'google/gemini-pro', label: 'Gemini Pro' },
-                    { value: 'openai/gpt-4-turbo', label: 'GPT-4 Turbo' },
-                    { value: 'openai/gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
+						  // Meta/Llama models
+						  { value: 'meta-llama/llama-4-maverick:free', label: 'Meta - Llama 4 Maverick' },
+						  { value: 'meta-llama/llama-4-scout:free', label: 'Meta - Llama 4 Scout' },
+						  { value: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Meta - Llama 3.3 70B' },
+						  { value: 'meta-llama/llama-3.2-11b-vision-instruct:free', label: 'Meta - Llama 3.2 11B Vision' },
+						
+                    // Google/Gemini models
+                    { value: 'google/gemini-2.5-pro-exp-03-25:free', label: 'Google - Gemini 2.5 Pro' },
+                    { value: 'google/gemini-2.0-flash-thinking-exp-1219:free', label: 'Google - Gemini 2.0 Flash Thinking' },
+                    { value: 'google/gemini-2.0-flash-exp:free', label: 'Google - Gemini 2.0 Flash' },
+                    { value: 'google/gemma-3-27b-it:free', label: 'Google - Gemma 3 27B' },
+                    { value: 'google/gemma-3-12b-it:free', label: 'Google - Gemma 3 12B' },
+
+                    // Mistral models
+                    { value: 'mistralai/mistral-small-3.1-24b-instruct:free', label: 'Mistral - Small 3.1 24B' },
+                    { value: 'mistralai/mistral-nemo:free', label: 'Mistral - Nemo' },
+                    { value: 'mistralai/mistral-7b-instruct:free', label: 'Mistral - 7B Instruct' },
+                    
+                    // Qwen models
+                    { value: 'qwen/qwen2.5-vl-72b-instruct:free', label: 'Qwen - 2.5 VL 72B' },
+                    { value: 'qwen/qwen2.5-vl-32b-instruct:free', label: 'Qwen - 2.5 VL 32B' }, 
+                    { value: 'qwen/qwen-2.5-72b-instruct:free', label: 'Qwen - 2.5 72B' },
+                    { value: 'qwen/qwen-2.5-coder-32b-instruct:free', label: 'Qwen - 2.5 Coder 32B' },
+                    
+                    // DeepSeek models
+                    { value: 'deepseek/deepseek-chat-v3-0324:free', label: 'DeepSeek - Chat V3' },
+                    { value: 'deepseek/deepseek-r1:free', label: 'DeepSeek - R1' },
+                    { value: 'deepseek/deepseek-r1-distill-llama-70b:free', label: 'DeepSeek - R1 Distill Llama 70B' },
                 ];
 
                 models.forEach(model => {
@@ -578,3 +941,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Add this function to parse markdown and convert it to HTML
+function parseMarkdown(text) {
+    if (!text) return '';
+    
+    // Replace code blocks
+    text = text.replace(/```([\s\S]*?)```/g, function(match, code) {
+        return `<pre><code>${escapeHtml(code)}</code></pre>`;
+    });
+    
+    // Replace inline code
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Replace headers
+    text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+    text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+    text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+    
+    // Replace bold
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Replace italic
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Replace quotes
+    text = text.replace(/^\> (.+)$/gm, '<blockquote>$1</blockquote>');
+    
+    // Replace unordered lists
+    text = text.replace(/^\- (.+)$/gm, '<li>$1</li>');
+    text = text.replace(/(<li>.*<\/li>)/gms, '<ul>$1</ul>');
+    
+    // Replace ordered lists
+    text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    text = text.replace(/(<li>.*<\/li>)/gms, '<ol>$1</ol>');
+    
+    // Replace links
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    
+    // Replace paragraphs (must be last)
+    text = text.replace(/\n\s*\n/g, '</p><p>');
+    text = '<p>' + text + '</p>';
+    
+    return text;
+}
+
+// Helper function to escape HTML special characters
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')  // This line had an extra slash: /<//g
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}

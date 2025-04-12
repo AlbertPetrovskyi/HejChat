@@ -50,10 +50,10 @@ body {
 	justify-content: center;
 	align-items: center;
 	cursor: pointer;
-	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
+	user-select: none;
 }
 
 #api-block {
@@ -92,17 +92,18 @@ body {
 
 .space {
 	display: flex;
-	flex-direction: column;
+	flex-direction: column; /* Change from column-reverse to column */
 	border-radius: 10px;
 	width: 95%;
 	height: 75%;
 	margin: 0 auto;
 	overflow-y: auto;
 	overflow-x: hidden;
-	scrollbar-width: none; /* Firefox */
-	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 	gap: 1rem;
-	position: relative; /* Add this to contain absolutely positioned children */
+	position: relative;
+	padding-top: 1rem;
 }
 
 .space::-webkit-scrollbar {
@@ -120,6 +121,7 @@ body {
 
 .space-request-block {
 	display: flex;
+	flex-direction: column; /* Stack content vertically */
 	cursor: pointer;
 	justify-content: center;
 	align-items: center;
@@ -130,10 +132,10 @@ body {
 	height: auto;
 	margin-right: 1rem;
 	margin-left: 0.75rem;
-	overflow-y: auto;
-	overflow-x: hidden;
-	scrollbar-width: none; /* Firefox */
-	-ms-overflow-style: none; /* IE and Edge */
+	word-break: break-word; /* Ensure text breaks properly within container */
+	box-sizing: border-box;
+	overflow-y: visible; /* Changed from auto to visible */
+	overflow-x: visible; /* Changed from hidden to visible */
 }
 
 .space-request-block::-webkit-scrollbar {
@@ -146,10 +148,11 @@ body {
 	white-space: normal;
 	width: 100%;
 	max-width: 100%;
-	text-align: center;
+	text-align: left; /* Better readability */
 	word-wrap: break-word;
 	overflow-wrap: break-word;
 	hyphens: auto;
+	box-sizing: border-box;
 }
 
 .space-copy {
@@ -191,6 +194,56 @@ body {
 	word-wrap: break-word;
 	overflow-wrap: break-word;
 	white-space: pre-wrap;
+}
+
+/* Markdown formatting */
+.space-response-text code {
+    background-color: #f4f4f4;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.space-response-text pre {
+    background-color: #f4f4f4;
+    padding: 0.75rem;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+}
+
+.space-response-text pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    display: block;
+}
+
+.space-response-text h1, .space-response-text h2, .space-response-text h3 {
+    margin: 1rem 0 0.5rem 0;
+    font-weight: bold;
+}
+
+.space-response-text blockquote {
+    border-left: 3px solid #2B7DB4;
+    padding-left: 0.8rem;
+    margin: 0.5rem 0;
+    color: #555;
+    font-style: italic;
+}
+
+.space-response-text ul, .space-response-text ol {
+    margin: 0.5rem 0 0.5rem 1.5rem;
+}
+
+.space-response-text p {
+    margin: 0.5rem 0;
+}
+
+.space-response-text a {
+    color: #2B7DB4;
+    text-decoration: underline;
 }
 
 .space-response-icons {
@@ -321,9 +374,8 @@ body {
 
 #api-form {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .api-input-container {
@@ -464,38 +516,64 @@ body {
 }
 
 .settings-select {
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1.1rem;
-    outline: none;
-    font-family: "DM Sans", sans-serif;
-    width: 100%;
-    background-color: white;
+	padding: 0.75rem;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	font-size: 1.1rem;
+	outline: none;
+	font-family: "DM Sans", sans-serif;
+	width: 100%;
+	background-color: white;
 }
 
-/* Make API overlay also use common styles */
-#api-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2000;
-    backdrop-filter: blur(5px);
+/* Typing indicator styles */
+.typing-indicator {
+	display: inline-block;
+	font-weight: bold;
+	animation: blink 1.5s infinite;
+	margin-left: 4px;
 }
 
-#api-block {
+@keyframes blink {
+	0%, 100% {
+		opacity: 0.2;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+
+/* Thinking toggle styles */
+.thinking-toggle {
+    display: inline-block;
+    margin: 0.5rem 0 0.5rem 0.75rem;
+    padding: 0.3rem 0.7rem;
+    background: linear-gradient(249deg, #013B6C -20.75%, #2B7DB4 68.99%);
+    color: white;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-weight: bold;
+}
+
+.thinking-toggle:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.thinking-content {
+    margin: 0.8rem 0.75rem;
     padding: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    background: #fff;
-    margin: 0 auto;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 70%;
-    max-width: 400px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    font-family: "DM Sans", sans-serif;
+    background-color: #f7f9fc;
+    border-left: 3px solid #2B7DB4;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: 5px;
+    color: #444;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
