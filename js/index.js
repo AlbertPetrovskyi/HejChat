@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
     let OPENROUTER_API_KEY = '';
-    let OPENROUTER_MODEL = 'meta-llama/llama-4-maverick:free';
+    let OPENROUTER_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 
     function createResponseMessageElement(messageText, originalQuery, showIcons = false, thinking = null) {
         const responseDiv = document.createElement('div');
@@ -154,11 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const responseTextSpan = document.createElement('span');
         responseTextSpan.classList.add('space-response-text');
         
-        // Use parsed markdown instead of raw text
-        if (messageText) {
+        // Check if response is empty and provide helpful message in Czech
+        if (messageText && messageText.trim() !== '') {
+            // Use parsed markdown instead of raw text
             responseTextSpan.innerHTML = parseMarkdown(messageText);
         } else {
-            responseTextSpan.textContent = '';
+            // Empty response message in Czech
+            responseTextSpan.innerHTML = '<p>Zkuste prosím znovu spustit dotaz, obnovit chat, nebo stránku.</p>';
+            responseDiv.classList.add('empty-response'); // Optional: Add class for styling
         }
 
         responseBlock.appendChild(responseTextSpan);
@@ -537,31 +540,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         typingIndicator.parentNode.removeChild(typingIndicator);
                     }
                     
-                    // Update the raw content
+                    // Store raw markdown content
                     rawMarkdownContent = fullText;
                     
-                    // Process just the new chunk and append it - don't replace the whole content
-                    const parsedChunk = parseMarkdown(chunk);
+                    // Don't parse individual chunks - parse the complete accumulated text instead
+                    const parsedFullText = parseMarkdown(fullText);
                     
-                    // Handle the first chunk specially
-                    if (responseTextSpan.innerHTML === "" || responseTextSpan.querySelector('.typing-indicator')) {
-                        responseTextSpan.innerHTML = parsedChunk;
-                    } else {
-                        // For subsequent chunks, append to existing content
-                        // Remove closing </p> tag if it exists
-                        let currentHTML = responseTextSpan.innerHTML;
-                        if (currentHTML.endsWith('</p>')) {
-                            currentHTML = currentHTML.substring(0, currentHTML.length - 4);
+                    // Simply replace the entire content with the newly parsed full text
+                    responseTextSpan.innerHTML = parsedFullText;
+                    
+                    // For smoother appearance, we'll still animate small chunks
+                    if (!isAborted) {
+                        // Create animated cursor effect at the end (optional)
+                        const addBlinkingCursor = false;
+                        if (addBlinkingCursor) {
+                            const cursorSpan = document.createElement('span');
+                            cursorSpan.className = 'typing-cursor';
+                            cursorSpan.textContent = '▋';
+                            responseTextSpan.appendChild(cursorSpan);
+                            
+                            // Remove cursor after a brief moment
+                            setTimeout(() => {
+                                if (cursorSpan.parentNode === responseTextSpan) {
+                                    responseTextSpan.removeChild(cursorSpan);
+                                }
+                            }, 500);
                         }
-                        
-                        // Remove opening <p> tag from parsed chunk
-                        let chunkToAppend = parsedChunk;
-                        if (chunkToAppend.startsWith('<p>')) {
-                            chunkToAppend = chunkToAppend.substring(3);
-                        }
-                        
-                        // Append the chunk and close the paragraph
-                        responseTextSpan.innerHTML = currentHTML + chunkToAppend;
                     }
                     
                     // Update thinking content if provided
@@ -789,6 +793,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 overlay.appendChild(apiBlock);
 
+                // Focus the input field immediately after adding to DOM
+                setTimeout(() => {
+                    const apiInput = document.getElementById('api-input');
+                    if (apiInput) {
+                        apiInput.focus();
+                    }
+                }, 100);
+
                 // Close modal when clicking outside
                 overlay.addEventListener('click', (event) => {
                     if (event.target === overlay) {
@@ -822,6 +834,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const form = document.createElement('form');
                 form.id = 'settings-form';
                 form.className = 'modal-form'; // Use common class for styling
+                
+                // Add keydown handler to the form itself
+                form.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        // Don't trigger if the select dropdown is open/active
+                        const select = document.getElementById('model-select');
+                        if (document.activeElement !== select || !select.size) {
+                            e.preventDefault();
+                            // Save current model selection
+                            OPENROUTER_MODEL = select.value;
+                            // Close the modal
+                            overlay.parentNode.removeChild(overlay);
+                        }
+                    }
+                });
 
                 // Create model selection container
                 const selectContainer = document.createElement('div');
@@ -838,46 +865,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 select.id = 'model-select';
                 select.className = 'settings-select';
                 
-                // Add keydown event listener to handle Enter key
+                // Fix: Only handle Enter key when select is focused and dropdown is not open
                 select.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && !select.size) {
                         e.preventDefault();
-                        // Save the selected model
+                        e.stopPropagation(); // Stop event bubbling
                         OPENROUTER_MODEL = select.value;
-                        // Close the modal
-                        overlay.parentNode.removeChild(overlay);
+                        
+                        // Prevent immediate closing
+                        setTimeout(() => {
+                            if (overlay.parentNode) {
+                                overlay.parentNode.removeChild(overlay);
+                            }
+                        }, 100);
                     }
                 });
 
                 const models = [
 						  // Meta/Llama models
-						  { value: 'meta-llama/llama-4-maverick:free', label: 'Meta - Llama 4 Maverick' },
-						  { value: 'meta-llama/llama-4-scout:free', label: 'Meta - Llama 4 Scout' },
 						  { value: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Meta - Llama 3.3 70B' },
-						  { value: 'meta-llama/llama-3.2-11b-vision-instruct:free', label: 'Meta - Llama 3.2 11B Vision' },
 						
                     // Google/Gemini models
-                    { value: 'google/gemini-2.5-pro-exp-03-25:free', label: 'Google - Gemini 2.5 Pro' },
-                    { value: 'google/gemini-2.0-flash-thinking-exp-1219:free', label: 'Google - Gemini 2.0 Flash Thinking' },
-                    { value: 'google/gemini-2.0-flash-exp:free', label: 'Google - Gemini 2.0 Flash' },
-                    { value: 'google/gemma-3-27b-it:free', label: 'Google - Gemma 3 27B' },
-                    { value: 'google/gemma-3-12b-it:free', label: 'Google - Gemma 3 12B' },
-
+                    { value: 'google/gemini-2.5-pro-exp-03-25:free', label: 'Google - Gemini 2.5 Pro Experimental' },
                     // Mistral models
                     { value: 'mistralai/mistral-small-3.1-24b-instruct:free', label: 'Mistral - Small 3.1 24B' },
-                    { value: 'mistralai/mistral-nemo:free', label: 'Mistral - Nemo' },
-                    { value: 'mistralai/mistral-7b-instruct:free', label: 'Mistral - 7B Instruct' },
-                    
-                    // Qwen models
-                    { value: 'qwen/qwen2.5-vl-72b-instruct:free', label: 'Qwen - 2.5 VL 72B' },
-                    { value: 'qwen/qwen2.5-vl-32b-instruct:free', label: 'Qwen - 2.5 VL 32B' }, 
-                    { value: 'qwen/qwen-2.5-72b-instruct:free', label: 'Qwen - 2.5 72B' },
-                    { value: 'qwen/qwen-2.5-coder-32b-instruct:free', label: 'Qwen - 2.5 Coder 32B' },
                     
                     // DeepSeek models
-                    { value: 'deepseek/deepseek-chat-v3-0324:free', label: 'DeepSeek - Chat V3' },
-                    { value: 'deepseek/deepseek-r1:free', label: 'DeepSeek - R1' },
-                    { value: 'deepseek/deepseek-r1-distill-llama-70b:free', label: 'DeepSeek - R1 Distill Llama 70B' },
+                    { value: 'deepseek/deepseek-v3-base:free', label: 'DeepSeek - V3 Base' },
                 ];
 
                 models.forEach(model => {
@@ -956,32 +970,106 @@ function parseMarkdown(text) {
     
     // Replace headers
     text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-    text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+    text = text.replace(/^## (.*$)/gm, '<h2>$1</2>');
     text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
     
     // Replace bold
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Replace italic
-    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Replace italic - careful not to interfere with list items using *
+    text = text.replace(/(?<!\*)\*(?!\s)([^\*]+?)(?<!\s)\*(?!\*)/g, '<em>$1</em>');
     
     // Replace quotes
     text = text.replace(/^\> (.+)$/gm, '<blockquote>$1</blockquote>');
     
-    // Replace unordered lists
-    text = text.replace(/^\- (.+)$/gm, '<li>$1</li>');
-    text = text.replace(/(<li>.*<\/li>)/gms, '<ul>$1</ul>');
+    // Improved list processing
+    let inList = false;
+    let listType = null;
+    let currentLevel = 0;
+    let levels = [];
+    const lines = text.split('\n');
     
-    // Replace ordered lists
-    text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-    text = text.replace(/(<li>.*<\/li>)/gms, '<ol>$1</ol>');
+    // First pass: identify and convert lists
+    for (let i = 0; i < lines.length; i++) {
+        // Match ordered lists (numbers) and unordered lists (*, +, -)
+        const olMatch = lines[i].match(/^(\s*)(\d+)\.\s+(.+)$/);
+        const ulMatch = lines[i].match(/^(\s*)([\*\+\-])\s+(.+)$/);
+        
+        if (olMatch || ulMatch) {
+            const match = olMatch || ulMatch;
+            const [_, indent, marker, content] = match;
+            const isOrdered = !!olMatch;
+            const indentLevel = indent.length;
+            
+            if (!inList) {
+                // Start a new list
+                inList = true;
+                listType = isOrdered ? 'ol' : 'ul';
+                currentLevel = indentLevel;
+                levels = [listType];
+                
+                lines[i] = `<${listType}><li>${content}</li>`;
+            } else {
+                // Already in a list
+                if (indentLevel > currentLevel) {
+                    // Start a nested list
+                    const newListType = isOrdered ? 'ol' : 'ul';
+                    levels.push(newListType);
+                    lines[i-1] = lines[i-1].replace(/<\/li>$/, `<${newListType}>`);
+                    lines[i] = `<li>${content}</li>`;
+                    currentLevel = indentLevel;
+                } else if (indentLevel < currentLevel) {
+                    // End one or more nested lists
+                    let closeTags = '';
+                    while (levels.length > 1 && indentLevel < currentLevel) {
+                        closeTags += `</${levels.pop()}>`;
+                        currentLevel = indent.length;
+                    }
+                    lines[i-1] = lines[i-1].replace(/<\/li>$/, `</li>${closeTags}`);
+                    lines[i] = `<li>${content}</li>`;
+                    currentLevel = indentLevel;
+                } else {
+                    // Continue current list
+                    lines[i] = `<li>${content}</li>`;
+                }
+            }
+        } else if (inList && lines[i].trim() === '') {
+            // Empty line while in a list
+            // Close all open lists
+            let closeTags = '';
+            while (levels.length > 0) {
+                closeTags += `</${levels.pop()}></li>`;
+            }
+            lines[i-1] = lines[i-1].replace(/<\/li>$/, closeTags);
+            inList = false;
+        }
+    }
+    
+    // Close any remaining open lists at the end
+    if (inList && levels.length > 0) {
+        let closeTags = '';
+        while (levels.length > 0) {
+            closeTags += `</${levels.pop()}>`;
+        }
+        lines[lines.length-1] += closeTags;
+    }
+    
+    text = lines.join('\n');
     
     // Replace links
     text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
     
-    // Replace paragraphs (must be last)
+    // Replace paragraphs (must be last, and avoid wrapping lists in paragraphs)
     text = text.replace(/\n\s*\n/g, '</p><p>');
-    text = '<p>' + text + '</p>';
+    
+    // Don't wrap list elements in paragraphs
+    if (!text.startsWith('<ul') && !text.startsWith('<ol')) {
+        text = '<p>' + text + '</p>';
+    }
+    
+    // Fix any double-wrapped paragraph tags from list processing
+    text = text.replace(/<p><(ul|ol)>/g, '<$1>');
+    text = text.replace(/<\/(ul|ol)><\/p>/g, '</$1>');
     
     return text;
 }
@@ -994,4 +1082,62 @@ function escapeHtml(text) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+function appendChunkToResponse(responseTextSpan, parsedChunk) {
+    // Handle the first chunk specially
+    if (responseTextSpan.innerHTML === "" || responseTextSpan.querySelector('.typing-indicator')) {
+        responseTextSpan.innerHTML = parsedChunk;
+        return;
+    }
+    
+    // For subsequent chunks, append to existing content
+    let currentHTML = responseTextSpan.innerHTML;
+    
+    // Remove closing </p> tag if it exists
+    if (currentHTML.endsWith('</p>')) {
+        currentHTML = currentHTML.substring(0, currentHTML.length - 4);
+    }
+    
+    // Remove opening <p> tag from parsed chunk
+    let chunkToAppend = parsedChunk;
+    if (chunkToAppend.startsWith('<p>')) {
+        chunkToAppend = chunkToAppend.substring(3);
+    }
+    
+    // Append the chunk and close the paragraph
+    responseTextSpan.innerHTML = currentHTML + chunkToAppend;
+    
+    // Add a subtle highlight to the new content (optional)
+    const highlightNew = false; // Set to true to enable highlighting effect
+    if (highlightNew) {
+        const tempSpan = document.createElement('span');
+        tempSpan.className = 'new-chunk';
+        tempSpan.style.backgroundColor = 'rgba(43, 125, 180, 0.1)';
+        
+        // Extract the last few characters that were just added
+        const lastTextNode = Array.from(responseTextSpan.childNodes)
+            .filter(node => node.nodeType === 3) // Text nodes only
+            .pop();
+            
+        if (lastTextNode) {
+            const textContent = lastTextNode.textContent;
+            const parent = lastTextNode.parentNode;
+            
+            // Replace the last few characters with the highlighted span
+            if (parent && textContent && textContent.length > 0) {
+                // This is complex DOM manipulation that would need more work
+                // For now, we'll skip the highlighting effect
+            }
+        }
+        
+        // Remove the highlight after a short delay
+        setTimeout(() => {
+            const highlights = document.querySelectorAll('.new-chunk');
+            highlights.forEach(el => {
+                el.classList.remove('new-chunk');
+                el.style.backgroundColor = 'transparent';
+            });
+        }, 300);
+    }
 }
