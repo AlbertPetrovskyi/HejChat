@@ -1242,7 +1242,7 @@ function showTutorialModal() {
         {
             title: 'Krok 3: Vložení API klíče do HejChat',
             content: 'Zkopírujte vytvořený API klíč a vložte jej do HejChat v sekci API.',
-            image: './img/api.png'
+            image: './img/hejchat_api.png'
         }
     ];
     

@@ -1,2 +1,59 @@
 # HejChat
+
 Tvůj roztomilý AI asistent &lt;3
+
+## O projektu
+
+HejChat je AI chatovací asistent školy Hejčín, který využívá pokročilé jazykové modely dostupné prostřednictvím OpenRouter API. Nabízí intuitivní a přívětivé rozhraní pro komunikaci s různými AI modely
+
+## Funkce
+
+- 💬 Plynulé streamování odpovědí po částech
+- 📚 Pomoc s domácími úkoly a studijními otázkami
+- 🔄 Přepínání mezi různými AI modely
+- 💡 Nápady a inspirace pro školní projekty
+- 🔑 Jednoduchá integrace s OpenRouter API
+
+## API Nastavení
+
+Pro používání HejChat potřebujete API klíč z OpenRouter:
+
+### Krok 1: Registrace na OpenRouter
+Nejprve přejděte na web [OpenRouter](https://openrouter.ai/sign-up) a zaregistrujte se pro vytvoření účtu.
+
+<img src="./img/openrouter_signup.png" alt="OpenRouter Sign Up" width="300">
+
+### Krok 2: Vytvoření API klíče
+V nastavení vašeho OpenRouter účtu vytvořte nový [API klíč](https://openrouter.ai/settings/keys).
+
+<img src="./img/openrouter_key.png" alt="OpenRouter API Key" width="300">
+
+### Krok 3: Vložení API klíče do HejChat
+Zkopírujte vytvořený API klíč a vložte jej do HejChat v sekci API.
+
+<img src="./img/hejchat_api.png" alt="HejChat API Key" width="300">
+
+## Dostupné modely
+
+HejChat podporuje nejlepší bezplatné jazykové modely.
+
+- Meta - Llama 3.3 70B
+- Google - Gemini 2.5 Pro Experimental
+- Mistral - Small 3.1 24B
+- DeepSeek - V3 Base
+
+## Jak používat
+
+1. Vložte svůj OpenRouter API klíč v sekci API
+2. Vyberte si preferovaný model v nastavení
+3. Začněte konverzaci položením otázky
+4. Užijte si plynulé chatování s AI!
+
+## Podpora
+
+Pokud vám HejChat pomáhá a chcete podpořit jeho další vývoj, můžete zvážit příspěvek v kryptoměnách:
+
+- **Bitcoin**: `bc1qlmz8xxl5ewr4mv5nxqfqeyf2yl0mq74zpz649s`
+- **Ethereum**: `0x12d94B6a5F6ce3988d16d408ac8661F648898afC`
+
+Každý příspěvek nám pomáhá udržovat HejChat v provozu a přidávat nové funkce. Děkujeme za vaši podporu! ❤️
