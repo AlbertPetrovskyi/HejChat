@@ -55,6 +55,55 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeText.classList.add('space-welcome-text');
         welcomeText.textContent = 'S čím mohu pomoci?';
         welcomeDiv.appendChild(welcomeText);
+        
+        // Add tutorial link that works like the API and Settings buttons
+        const tutorialBlock = document.createElement('div');
+        tutorialBlock.classList.add('welcome-tutorial-block');
+        tutorialBlock.style.display = 'flex';
+        tutorialBlock.style.alignItems = 'center';
+        tutorialBlock.style.gap = '10px';
+        tutorialBlock.style.marginTop = '20px';
+        tutorialBlock.style.cursor = 'pointer';
+        tutorialBlock.style.pointerEvents = 'auto'; // This is the key fix
+
+        // Create the SVG element
+        const tutorialSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        tutorialSvg.setAttribute('width', '31');
+        tutorialSvg.setAttribute('height', '25');
+        tutorialSvg.setAttribute('viewBox', '0 0 62 50');
+        tutorialSvg.setAttribute('fill', 'none');
+        tutorialSvg.style.pointerEvents = 'auto'; // Also ensure SVG is clickable
+
+        // Add SVG content
+        tutorialSvg.innerHTML = `
+          <path d="M30.5556 0L0 16.6667L11.1111 22.7222V39.3889L30.5556 50L50 39.3889V22.7222L55.5556 19.6944V38.8889H61.1111V16.6667L30.5556 0ZM49.5 16.6667L30.5556 27L11.6111 16.6667L30.5556 6.33333L49.5 16.6667ZM44.4444 36.1111L30.5556 43.6667L16.6667 36.1111V25.75L30.5556 33.3333L44.4444 25.75V36.1111Z" fill="url(#paint0_linear_415_3)"/>
+          <defs>
+            <linearGradient id="paint0_linear_415_3" x1="71.5762" y1="-15.0224" x2="9.46943" y2="14.6302" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#013B6C"/>
+              <stop offset="1" stop-color="#2B7DB4"/>
+            </linearGradient>
+          </defs>
+        `;
+
+        // Create the text element
+        const tutorialText = document.createElement('span');
+        tutorialText.textContent = 'Sledujte náš užitečný API návod.';
+        tutorialText.style.background = 'linear-gradient(249deg, #013B6C -20.75%, #2B7DB4 68.99%)';
+        tutorialText.style.webkitBackgroundClip = 'text';
+        tutorialText.style.webkitTextFillColor = 'transparent';
+        tutorialText.style.backgroundClip = 'text';
+        tutorialText.style.fontWeight = '500';
+        tutorialText.style.pointerEvents = 'auto'; // Also ensure text is clickable
+
+        // Append elements
+        tutorialBlock.appendChild(tutorialSvg);
+        tutorialBlock.appendChild(tutorialText);
+        welcomeDiv.appendChild(tutorialBlock);
+
+        // Add direct click event - simpler approach
+        tutorialBlock.onclick = () => {
+            showTutorialModal();
+        };
 
         return welcomeDiv;
     }
@@ -1140,4 +1189,219 @@ function appendChunkToResponse(responseTextSpan, parsedChunk) {
             });
         }, 300);
     }
+}
+
+// Add function to show the tutorial modal
+function showTutorialModal() {
+    // Check if modal already exists
+    let overlay = document.getElementById('tutorial-overlay');
+    if (overlay) return;
+    
+    // Create overlay
+    overlay = document.createElement('div');
+    overlay.id = 'tutorial-overlay';
+    overlay.className = 'modal-overlay';
+    document.body.appendChild(overlay);
+    
+    // Create tutorial modal with font family
+    const tutorialModal = document.createElement('div');
+    tutorialModal.id = 'tutorial-modal';
+    tutorialModal.style.fontFamily = '"DM Sans", sans-serif';  // Added font-family
+    
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '✕';
+    closeButton.className = 'tutorial-close-button';
+    
+    closeButton.addEventListener('click', () => {
+        overlay.parentNode.removeChild(overlay);
+    });
+    
+    tutorialModal.appendChild(closeButton);
+    
+    // Create content container for pages
+    const contentContainer = document.createElement('div');
+    contentContainer.className = 'tutorial-content-container';
+    
+    // Create pages array with content - UPDATED IMAGE PATHS
+    const pages = [
+        {
+            title: 'Krok 1: Registrace na OpenRouter',
+            content: 'Nejprve přejděte na web OpenRouter a zaregistrujte se pro vytvoření účtu.',
+            link: 'https://openrouter.ai/sign-up',
+            linkText: 'openrouter.ai/sign-up',
+            image: './img/openrouter_signup.png'
+        },
+        {
+            title: 'Krok 2: Vytvoření API klíče',
+            content: 'V nastavení vašeho OpenRouter účtu vytvořte nový API klíč.',
+            link: 'https://openrouter.ai/settings/keys',
+            linkText: 'openrouter.ai/settings/keys',
+            image: './img/openrouter_key.png'
+        },
+        {
+            title: 'Krok 3: Vložení API klíče do HejChat',
+            content: 'Zkopírujte vytvořený API klíč a vložte jej do HejChat v sekci API.',
+            image: './img/api.png'
+        }
+    ];
+    
+    let currentPage = 0;
+    
+    // Function to render current page - updated version with all fixes
+    function renderPage(pageIndex) {
+        const page = pages[pageIndex];
+        contentContainer.innerHTML = '';
+        
+        // Create page content
+        const pageContent = document.createElement('div');
+        pageContent.className = 'tutorial-page';
+        
+        // Add step title with <br> after "Krok X"
+        const titleEl = document.createElement('h2');
+        const titleText = page.title.replace(/^(Krok \d+:)/, '$1<br>');
+        titleEl.innerHTML = titleText; // Use innerHTML to respect the <br> tag
+        titleEl.className = 'tutorial-title';
+        titleEl.style.fontSize = '22px';
+        
+        // Add step description
+        const contentEl = document.createElement('p');
+        contentEl.textContent = page.content;
+        contentEl.className = 'tutorial-description';
+        contentEl.style.fontSize = '16px';
+        
+        // Create content area with vertical centering
+        const contentArea = document.createElement('div');
+        contentArea.className = 'tutorial-content-area';
+        contentArea.style.flex = '1';
+        contentArea.style.overflowY = 'auto';
+        contentArea.style.paddingBottom = '15px';
+        contentArea.style.display = 'flex';
+        contentArea.style.flexDirection = 'column';
+        contentArea.style.justifyContent = 'center'; // Centralize content vertically
+        
+        contentArea.appendChild(titleEl);
+        contentArea.appendChild(contentEl);
+        
+        // Add image
+        if (page.image) {
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'tutorial-image-container';
+            
+            const imageEl = document.createElement('img');
+            imageEl.src = page.image;
+            imageEl.alt = `Ilustrace ke kroku ${pageIndex + 1}`;
+            imageEl.className = 'tutorial-image';
+            
+            imageContainer.appendChild(imageEl);
+            contentArea.appendChild(imageContainer);
+        }
+        
+        // Removed page indicator dots as requested
+        
+        pageContent.appendChild(contentArea);
+        
+        // Create fixed footer with swapped buttons
+        const footerContainer = document.createElement('div');
+        footerContainer.className = 'tutorial-footer';
+        footerContainer.style.display = 'flex';
+        footerContainer.style.justifyContent = 'center';
+        footerContainer.style.alignItems = 'center';
+        footerContainer.style.borderTop = '1px solid #eee';
+        footerContainer.style.padding = '15px 0 10px';
+        footerContainer.style.marginTop = 'auto';
+        footerContainer.style.gap = '20px';
+
+        // Create buttons container to manage order
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.style.gap = '20px';
+        
+        // 1. Add external link button FIRST (for steps 1 and 2)
+        if (page.link) {
+            const linkBtn = document.createElement('a');
+            
+            // Set link text based on step - TRANSLATED TO CZECH
+            let linkText = '';
+            if (pageIndex === 0) {
+                linkText = 'Registrovat';  // Changed from "Sign Up" to Czech
+            } else if (pageIndex === 1) {
+                linkText = 'Vytvořit klíč';  // Changed from "Create Key" to Czech
+            }
+            
+            // Create span for link text to allow adding SVG after it
+            const linkTextSpan = document.createElement('span');
+            linkTextSpan.textContent = linkText;
+            
+            // Create SVG element
+            const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svgIcon.setAttribute('width', '20');
+            svgIcon.setAttribute('height', '20');
+            svgIcon.setAttribute('viewBox', '0 0 20 20');
+            svgIcon.setAttribute('fill', 'none');
+            svgIcon.style.marginLeft = '6px';
+            svgIcon.innerHTML = `
+                <path d="M10 17.5C14.1421 17.5 17.5 14.1421 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5Z" stroke="currentColor" stroke-width="1.25" stroke-miterlimit="10"></path>
+                <path d="M8.4375 7.97925H12.1875V11.7292" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M7.5 12.875L11.875 8.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"></path>
+            `;
+            
+            linkBtn.href = page.link;
+            linkBtn.target = '_blank';
+            linkBtn.className = 'tutorial-external-link';
+            linkBtn.style.padding = '10px 30px';
+            linkBtn.style.fontSize = '16px';
+            linkBtn.style.fontWeight = '500';
+            linkBtn.style.display = 'flex';
+            linkBtn.style.alignItems = 'center';
+            
+            linkBtn.appendChild(linkTextSpan);
+            linkBtn.appendChild(svgIcon);
+            
+            buttonsContainer.appendChild(linkBtn);
+        }
+        
+        // 2. Add navigation button SECOND
+        const navButton = document.createElement('button');
+        navButton.className = 'tutorial-nav-button';
+        navButton.style.padding = '10px 30px';
+        navButton.style.fontSize = '16px';
+        
+        // Later in the code, update the navigation button to put checkmark after text
+        if (pageIndex < pages.length - 1) {
+            navButton.innerHTML = '✓';  // Checkmark moved after text
+            navButton.title = 'Další';
+            navButton.addEventListener('click', () => {
+                currentPage++;
+                renderPage(currentPage);
+            });
+        } else {
+            navButton.innerHTML = '✓';  // Checkmark moved after text
+            navButton.title = 'Dokončit';
+            navButton.addEventListener('click', () => {
+                overlay.parentNode.removeChild(overlay);
+            });
+        }
+        
+        buttonsContainer.appendChild(navButton);
+        
+        // Add all buttons to footer
+        footerContainer.appendChild(buttonsContainer);
+        pageContent.appendChild(footerContainer);
+        
+        contentContainer.appendChild(pageContent);
+    }
+    
+    // Initialize with the first page
+    renderPage(currentPage);
+    
+    tutorialModal.appendChild(contentContainer);
+    overlay.appendChild(tutorialModal);
+    
+    // Close modal when clicking outside
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) {
+            overlay.parentNode.removeChild(overlay);
+        }
+    });
 }
