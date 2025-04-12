@@ -19,19 +19,19 @@ HejChat je AI chatovací asistent školy Hejčín, který využívá pokročilé
 Pro používání HejChat potřebujete API klíč z OpenRouter:
 
 ### Krok 1: Registrace na OpenRouter
-Nejprve přejděte na web [OpenRouter](https://openrouter.ai/sign-up) a zaregistrujte se pro vytvoření účtu.
+Nejprve přejděte na web <a href="https://openrouter.ai/sign-up" target="_blank" rel="noopener noreferrer">OpenRouter</a> a zaregistrujte se pro vytvoření účtu.
 
-<img src="./img/openrouter_signup.png" alt="OpenRouter Sign Up" width="300">
+<img src="./img/openrouter_signup.png" alt="OpenRouter Sign Up" width="400">
 
 ### Krok 2: Vytvoření API klíče
-V nastavení vašeho OpenRouter účtu vytvořte nový [API klíč](https://openrouter.ai/settings/keys).
+V nastavení vašeho OpenRouter účtu vytvořte nový <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">API klíč</a>.
 
-<img src="./img/openrouter_key.png" alt="OpenRouter API Key" width="300">
+<img src="./img/openrouter_key.png" alt="OpenRouter API Key" width="400">
 
 ### Krok 3: Vložení API klíče do HejChat
 Zkopírujte vytvořený API klíč a vložte jej do HejChat v sekci API.
 
-<img src="./img/hejchat_api.png" alt="HejChat API Key" width="300">
+<img src="./img/hejchat_api.png" alt="HejChat API Key" width="400">
 
 ## Dostupné modely
 
@@ -55,5 +55,6 @@ Pokud vám HejChat pomáhá a chcete podpořit jeho další vývoj, můžete zv�
 
 - **Bitcoin**: `bc1qlmz8xxl5ewr4mv5nxqfqeyf2yl0mq74zpz649s`
 - **Ethereum**: `0x12d94B6a5F6ce3988d16d408ac8661F648898afC`
+- **Solana**: `Hbuz9fjY2FPZb2Cisd8Beyymc6m5b4TGRAZWJkFwnuJR`
 
 Každý příspěvek nám pomáhá udržovat HejChat v provozu a přidávat nové funkce. Děkujeme za vaši podporu! ❤️
