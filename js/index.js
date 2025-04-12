@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             responseTextSpan.innerHTML = parseMarkdown(messageText);
         } else {
             // Empty response message in Czech
-            responseTextSpan.innerHTML = '<p>Zkuste prosím znovu spustit dotaz, obnovit chat, nebo stránku.</p>';
+            responseTextSpan.innerHTML = '<p>Promiň, teď tvůj požadavek nejde zpracovat. Zkus to prosím znovu.</p>';
             responseDiv.classList.add('empty-response'); // Optional: Add class for styling
         }
 
@@ -299,11 +299,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                     }
                                     
                                     // Show error message
-                                    tempResponseTextSpan.textContent = "Sorry, I couldn't process your request at this time.";
+                                    tempResponseTextSpan.textContent = "Promiň, teď tvůj požadavek nejde zpracovat. Zkus to prosím znovu.";
                                     
                                     // After error, create a final response WITH icons
                                     const errorResponseElement = createResponseMessageElement(
-                                        "Sorry, I couldn't process your request at this time.", 
+                                        "Promiň, teď tvůj požadavek nejde zpracovat. Zkus to prosím znovu.", 
                                         originalQuery, 
                                         true  // Show icons even for errors
                                     );
