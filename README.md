@@ -1,60 +1,83 @@
-# HejChat
+# Amogus Website
 
-Tvůj roztomilý AI asistent &lt;3
+Welcome to the Amogus website project! This project is a web application that showcases the Amogus decentralized meme coin inspired by the game Among Us. The application is built using React for the frontend and Node.js for the backend.
 
-## O projektu
+## Project Structure
 
-HejChat je AI chatovací asistent školy Hejčín, který využívá pokročilé jazykové modely dostupné prostřednictvím OpenRouter API. Nabízí intuitivní a přívětivé rozhraní pro komunikaci s různými AI modely
+The project is organized into two main directories: `client` and `server`.
 
-## Funkce
+### Client
 
-- 💬 Plynulé streamování odpovědí po částech
-- 📚 Pomoc s domácími úkoly a studijními otázkami
-- 🔄 Přepínání mezi různými AI modely
-- 💡 Nápady a inspirace pro školní projekty
-- 🔑 Jednoduchá integrace s OpenRouter API
+The `client` directory contains the frontend application built with React. Here are the key components:
 
-## API Nastavení
+- **public/**: Contains static files such as `index.html` and `favicon.ico`.
+- **src/**: Contains the source code for the React application.
+  - **animations/**: JavaScript code for handling animations.
+  - **assets/**: Contains fonts and images used in the application.
+  - **components/**: Reusable components such as Header, Footer, Airdrop, and About Us.
+  - **pages/**: Contains page components like Home and NotFound.
+  - **context/**: Sets up the React context for global state management.
+  - **utils/**: Utility functions for animations.
+  - **App.jsx**: The main App component that sets up routing and context.
+  - **index.jsx**: The entry point for the React application.
+  - **index.css**: Global styles for the application.
 
-Pro používání HejChat potřebujete API klíč z OpenRouter:
+### Server
 
-### Krok 1: Registrace na OpenRouter
-Nejprve přejděte na web <a href="https://openrouter.ai/sign-up" target="_blank" rel="noopener noreferrer">OpenRouter</a> a zaregistrujte se pro vytvoření účtu.
+The `server` directory contains the backend application built with Node.js. Here are the key components:
 
-<img src="./img/openrouter_signup.png" alt="OpenRouter Sign Up" width="400">
+- **controllers/**: Contains the API controller for handling requests and responses.
+- **models/**: Defines the User model for the database.
+- **routes/**: Defines the API routes for the backend.
+- **config/**: Contains the database configuration.
+- **middleware/**: Contains authentication middleware.
+- **server.js**: The entry point for the backend application.
 
-### Krok 2: Vytvoření API klíče
-V nastavení vašeho OpenRouter účtu vytvořte nový <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">API klíč</a>.
+## Getting Started
 
-<img src="./img/openrouter_key.png" alt="OpenRouter API Key" width="400">
+To get started with the Amogus website, follow these steps:
 
-### Krok 3: Vložení API klíče do HejChat
-Zkopírujte vytvořený API klíč a vložte jej do HejChat v sekci API.
+1. **Clone the repository**:
+   ```
+   git clone <repository-url>
+   cd amogus-website
+   ```
 
-<img src="./img/hejchat_api.png" alt="HejChat API Key" width="400">
+2. **Install dependencies**:
+   - For the client:
+     ```
+     cd client
+     npm install
+     ```
+   - For the server:
+     ```
+     cd server
+     npm install
+     ```
 
-## Dostupné modely
+3. **Run the applications**:
+   - Start the server:
+     ```
+     cd server
+     node server.js
+     ```
+   - Start the client:
+     ```
+     cd client
+     npm start
+     ```
 
-HejChat podporuje nejlepší bezplatné jazykové modely.
+## Features
 
-- Meta - Llama 3.3 70B
-- Google - Gemini 2.5 Pro Experimental
-- Mistral - Small 3.1 24B
-- DeepSeek - V3 Base
+- Responsive design with animations.
+- Airdrop feature to engage users.
+- About Us section to provide information about the project.
+- Error handling for non-existent routes.
 
-## Jak používat
+## Contributing
 
-1. Vložte svůj OpenRouter API klíč v sekci API
-2. Vyberte si preferovaný model v nastavení
-3. Začněte konverzaci položením otázky
-4. Užijte si plynulé chatování s AI!
+Contributions are welcome! Please open an issue or submit a pull request for any improvements or features you'd like to add.
 
-## Podpora
+## License
 
-Pokud vám HejChat pomáhá a chcete podpořit jeho další vývoj, můžete zvážit příspěvek v kryptoměnách:
-
-- **Bitcoin**: `bc1qlmz8xxl5ewr4mv5nxqfqeyf2yl0mq74zpz649s`
-- **Ethereum**: `0x12d94B6a5F6ce3988d16d408ac8661F648898afC`
-- **Solana**: `Hbuz9fjY2FPZb2Cisd8Beyymc6m5b4TGRAZWJkFwnuJR`
-
-Každý příspěvek nám pomáhá udržovat HejChat v provozu a přidávat nové funkce. Děkujeme za vaši podporu! ❤️
+This project is licensed under the MIT License. See the LICENSE file for details.

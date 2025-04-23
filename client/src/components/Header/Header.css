@@ -1,0 +1,51 @@
+.header {
+    background-color: #000000; /* Header background color */
+    color: #FFFFFF; /* Text color */
+    display: flex; /* Flexbox layout */
+    justify-content: space-between; /* Space between items */
+    align-items: center; /* Center items vertically */
+    padding: 20px; /* Padding around the header */
+    position: relative; /* Positioning context for absolute elements */
+    z-index: 1000; /* Ensure header is above other content */
+    transition: background-color 0.3s ease; /* Smooth background color transition */
+}
+
+.header:hover {
+    background-color: #1a1a1a; /* Darker background on hover */
+}
+
+.logo {
+    font-size: 24px; /* Logo font size */
+    font-weight: bold; /* Bold font weight */
+    text-transform: uppercase; /* Uppercase text */
+}
+
+.nav-links {
+    display: flex; /* Flexbox layout for navigation links */
+    gap: 20px; /* Space between links */
+}
+
+.nav-link {
+    color: #FFFFFF; /* Link color */
+    text-decoration: none; /* Remove underline from links */
+    font-size: 18px; /* Link font size */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.nav-link:hover {
+    color: #CD0000; /* Change color on hover */
+}
+
+.cta-button {
+    background-color: #CD0000; /* Call to action button color */
+    color: #FFFFFF; /* Button text color */
+    padding: 10px 20px; /* Padding for button */
+    border: none; /* Remove border */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease; /* Smooth background color transition */
+}
+
+.cta-button:hover {
+    background-color: #8E0000; /* Darker button color on hover */
+}

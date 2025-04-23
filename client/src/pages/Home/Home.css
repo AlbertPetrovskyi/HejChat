@@ -1,0 +1,52 @@
+body {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    background: linear-gradient(90deg, #CD0000, #8E0000);
+    padding: 20px;
+    text-align: center;
+}
+
+.main-content {
+    padding: 40px;
+    text-align: center;
+}
+
+.main-content h1 {
+    font-size: 50px;
+    margin-bottom: 20px;
+}
+
+.main-content p {
+    font-size: 20px;
+    margin-bottom: 40px;
+}
+
+.button {
+    background-color: #D70000;
+    border: none;
+    border-radius: 15px;
+    color: white;
+    font-size: 20px;
+    padding: 15px 30px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button:hover {
+    background-color: #880000;
+}
+
+.footer {
+    background-color: #000000;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
